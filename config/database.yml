@@ -83,3 +83,5 @@ production:
   database: app_production
   username: app
   password: <%= ENV["APP_DATABASE_PASSWORD"] %>
+  # Neon は無操作が続くとサスペンドし、最初の接続に数秒かかることがあるので待ち時間を長めに取る
+  connect_timeout: 10

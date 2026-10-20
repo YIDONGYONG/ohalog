@@ -1,11 +1,5 @@
-# Render Blueprint: 無料の Web Service と無料の PostgreSQL を一括で作る
-# 注意: 無料 Postgres は作成から30日で期限切れになる。無料 Web は15分アクセスがないとスリープする
-databases:
-  - name: miracle-db
-    plan: free
-    databaseName: miracle_production
-    user: miracle
-
+# Render Blueprint: 無料の Web Service を作る（データベースは Neon の PostgreSQL を使う）
+# 注意: 無料 Web は15分アクセスがないとスリープする
 services:
   - type: web
     name: miracle-morning
@@ -25,7 +19,5 @@ services:
         value: "1"
       - key: SECRET_KEY_BASE   # master.key を共有せず、Render 側で自動生成する
         generateValue: true
-      - key: DATABASE_URL
-        fromDatabase:
-          name: miracle-db
-          property: connectionString
+      - key: DATABASE_URL   # Neon の接続文字列（sslmode=require 付き）。秘密情報なので Render の画面から設定する
+        sync: false
