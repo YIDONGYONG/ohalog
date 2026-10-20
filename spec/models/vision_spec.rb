@@ -113,4 +113,46 @@ RSpec.describe Vision, type: :model do
       expect(Vision.exists?(theirs.id)).to be true
     end
   end
+
+  describe "achievement and priority" do
+    def make(title, days, **attrs) = user.visions.create!(title: title, content: "c", target_date: Date.current + days, **attrs)
+
+    it "can be achieved and reopened" do
+      v = make("a", 5)
+      v.achieve!
+      expect(v.reload).to be_achieved
+      v.reopen!
+      expect(v.reload).not_to be_achieved
+    end
+
+    it "keeps only one top priority per user" do
+      a = make("a", 5)
+      b = make("b", 9)
+      a.toggle_top_priority!
+      b.toggle_top_priority!
+      expect(a.reload.top_priority).to be false
+      expect(b.reload.top_priority).to be true
+      b.toggle_top_priority!
+      expect(b.reload.top_priority).to be false
+    end
+
+    it "features the top priority one, otherwise the nearest unachieved one" do
+      far = make("far", 30)
+      near = make("near", 3)
+      expect(user.visions.featured).to eq near
+      far.toggle_top_priority!
+      expect(user.visions.featured).to eq far
+      far.achieve!
+      expect(user.visions.featured).to eq near
+      near.achieve!
+      expect(user.visions.featured).to be_nil
+    end
+
+    it "lists unachieved first and achieved last" do
+      done = make("done", 1).tap(&:achieve!)
+      later = make("later", 20)
+      soon = make("soon", 2)
+      expect(user.visions.for_list.to_a).to eq [ soon, later, done ]
+    end
+  end
 end

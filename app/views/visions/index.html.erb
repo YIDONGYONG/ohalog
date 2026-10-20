@@ -5,6 +5,8 @@
   <main class="page-body -mt-10">
     <%= link_to "新しいビジョンを作る", new_vision_path, class: "btn btn-primary mb-4 block shadow-card" %>
 
+    <%= render "visions/progress", user: current_user %>
+
     <div id="visions" class="card-grid">
       <%= render @visions %>
     </div>

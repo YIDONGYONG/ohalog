@@ -12,6 +12,39 @@ class Vision < ApplicationRecord
   validates :target_date, presence: true, unless: :unparsable_target_date?
   validate :target_date_must_be_valid
 
+  scope :unachieved, -> { where(achieved_at: nil) }
+  # 一覧の並び順: 未達成が先、その中で最優先 → 達成予定日が近い順。達成済みは後ろにまとめる
+  scope :for_list, -> { order(Arel.sql("(achieved_at IS NOT NULL)"), top_priority: :desc, target_date: :asc, id: :asc) }
+
+  # ホームの最初に出す目標。最優先に選んだものがあればそれ、なければ達成予定日がいちばん近い未達成の目標
+  def self.featured
+    unachieved.order(top_priority: :desc, target_date: :asc, id: :asc).first
+  end
+
+  def achieved? = achieved_at.present?
+
+  def achieve!
+    update!(achieved_at: Time.current, top_priority: false)
+  end
+
+  def reopen!
+    update!(achieved_at: nil)
+  end
+
+  # 最優先は1人につき1件だけ。すでに最優先なら外す
+  def toggle_top_priority!
+    return if achieved?
+
+    transaction do
+      if top_priority?
+        update!(top_priority: false)
+      else
+        user.visions.where.not(id: id).update_all(top_priority: false)
+        update!(top_priority: true)
+      end
+    end
+  end
+
   private
 
   def unparsable_target_date?

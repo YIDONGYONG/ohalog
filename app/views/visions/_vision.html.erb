@@ -1,7 +1,35 @@
-<%# ビジョン1件分のカード（編集・削除は右上の「⋯」メニューから） %>
-<section id="<%= dom_id vision %>" class="card">
-  <div class="flex items-start justify-between gap-2">
-    <h3 class="text-lg font-extrabold text-ink [overflow-wrap:anywhere]"><%= vision.title %></h3>
+<%# ビジョン1件分のカード。左のまるいチェックで達成を記録・取り消し、編集・削除・最優先は右上の「⋯」メニューから %>
+<%# locals: vision(必須), just_achieved(任意。いま達成した直後だけ true にして、お祝いの動きを見せる) %>
+<% fresh = local_assigns[:just_achieved] && vision.achieved? %>
+<section id="<%= dom_id vision %>" class="card <%= 'vision-done' if vision.achieved? %> <%= 'vision-done-fresh' if fresh %>">
+  <div class="flex items-start gap-3">
+    <%# 達成チェック。色だけに頼らず、チェックの形と aria-label でも状態を伝える %>
+    <div class="vision-check-wrap">
+      <% if vision.achieved? %>
+        <%= button_to reopen_vision_path(vision), method: :patch, form: { class: "contents" },
+                      class: ["vision-check", "vision-check-on", ("vision-check-fresh" if fresh)],
+                      aria: { label: "達成を取り消す", pressed: "true" } do %>
+          <%= render "visions/check_icon" %>
+        <% end %>
+        <% if fresh %>
+          <% 6.times do |i| %><span class="spark spark-<%= i + 1 %>" aria-hidden="true"></span><% end %>
+        <% end %>
+      <% else %>
+        <%= button_to achieve_vision_path(vision), method: :patch, form: { class: "contents" },
+                      class: "vision-check", aria: { label: "達成にする", pressed: "false" } do %>
+          <%= render "visions/check_icon" %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="min-w-0 flex-1">
+      <% if vision.top_priority? && !vision.achieved? %>
+        <p class="badge mb-1 inline-block !bg-amber-soft">★ 最優先</p>
+      <% elsif vision.achieved? %>
+        <p class="badge mb-1 inline-block !bg-sage-tint">達成しました</p>
+      <% end %>
+      <h3 class="text-lg font-extrabold text-ink [overflow-wrap:anywhere]"><%= vision.title %></h3>
+    </div>
 
     <div class="relative shrink-0" data-controller="menu"
          data-action="click@window->menu#closeOnOutside keydown.esc->menu#closeOnEscape">
@@ -14,7 +42,12 @@
       </button>
 
       <div hidden data-menu-target="panel"
-           class="absolute right-0 z-10 mt-1 w-32 overflow-hidden rounded-2xl bg-card py-1 shadow-card ring-1 ring-line">
+           class="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-2xl bg-card py-1 shadow-card ring-1 ring-line">
+        <% unless vision.achieved? %>
+          <%= button_to (vision.top_priority? ? "最優先を外す" : "最優先にする"), prioritize_vision_path(vision), method: :patch,
+                        form: { class: "contents" },
+                        class: "block w-full cursor-pointer px-4 py-3 text-left text-sm font-bold text-ink hover:bg-surface-muted" %>
+        <% end %>
         <%= link_to "編集", edit_vision_path(vision), class: "block px-4 py-3 text-sm font-bold text-ink hover:bg-surface-muted" %>
         <%= link_to "削除", vision_path(vision), class: "block px-4 py-3 text-sm font-bold text-danger hover:bg-surface-muted",
                     data: { turbo_method: :delete, turbo_confirm: "削除してもよろしいですか？" } %>
@@ -23,5 +56,9 @@
   </div>
 
   <p class="mt-2 [overflow-wrap:anywhere] whitespace-pre-wrap text-ink-body"><%= vision.content %></p>
-  <% if vision.target_date %><p class="mt-2 text-sm text-ink-muted">達成予定日：<%= vision.target_date.strftime("%Y年%-m月%-d日") %></p><% end %>
+  <% if vision.achieved? %>
+    <p class="mt-2 text-sm text-sage-deep"><%= vision.achieved_at.in_time_zone.strftime("%Y年%-m月%-d日") %>に達成</p>
+  <% elsif vision.target_date %>
+    <p class="mt-2 text-sm text-ink-muted">達成予定日：<%= vision.target_date.strftime("%Y年%-m月%-d日") %></p>
+  <% end %>
 </section>

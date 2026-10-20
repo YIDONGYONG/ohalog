@@ -214,8 +214,33 @@
     25% { opacity: 1; }
     100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); }
   }
+
+  /* ---------- ビジョンの達成チェック（まるが満ちて、チェックが描かれ、カードがふわっと光る） ---------- */
+  .vision-check-wrap { @apply relative flex-none; }
+  .vision-check { @apply grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-beige-deep transition active:scale-90; }
+  .vision-check:hover { @apply text-sage; }
+  .vision-check-icon { @apply size-9; }
+  .vision-check-ring { fill: transparent; stroke: currentColor; stroke-width: 2; transition: fill 0.4s var(--ease-calm), stroke 0.4s var(--ease-calm); }
+  .vision-check-mark { fill: none; stroke: transparent; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+  .vision-check-on { @apply text-sage; }
+  .vision-check-on .vision-check-ring { fill: var(--color-sage); }
+  .vision-check-on .vision-check-mark { stroke: #fff; }
+  .vision-check-fresh .vision-check-icon { animation: check-bounce 0.7s var(--ease-calm) both; }
+  .vision-check-fresh .vision-check-mark { animation: check-draw 0.5s 0.2s var(--ease-calm) both; }
+  .vision-check-wrap .spark { @apply left-1/2 top-1/2 -ml-0.75 -mt-0.75; animation-delay: 0.15s; }
+  .vision-done { background: linear-gradient(180deg, var(--color-sage-tint), var(--color-card) 70%); }
+  .vision-done h3 { @apply text-ink-muted; }
+  .vision-done-fresh { animation: vision-done-pop 1s var(--ease-calm) both; }
+  @keyframes check-bounce { 0% { transform: scale(0.6); } 55% { transform: scale(1.18); } 100% { transform: none; } }
+  @keyframes vision-done-pop {
+    0% { transform: none; box-shadow: 0 0 0 0 rgb(141 174 136 / 0.5); }
+    40% { transform: translateY(-4px) scale(1.015); box-shadow: 0 0 0 14px rgb(141 174 136 / 0); }
+    100% { transform: none; box-shadow: 0 0 0 0 rgb(141 174 136 / 0); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .success-fresh, .success-fresh .success-check path, .card-celebrate, .spark, .celebrate-ring, .celebrate-spark, .celebrate-sun { animation: none; }
+    .success-fresh, .success-fresh .success-check path, .card-celebrate, .spark, .celebrate-ring, .celebrate-spark, .celebrate-sun,
+    .vision-done-fresh, .vision-check-fresh .vision-check-icon, .vision-check-fresh .vision-check-mark { animation: none; }
     .spark, .celebrate-ring, .celebrate-spark { display: none; }
   }
 

@@ -1,4 +1,4 @@
-<%# ホーム（今日）: 挨拶 → 今日の一歩 → 積み上げた朝 → また始める → 希望の根拠 → 明日の私へ %>
+<%# ホーム（今日）: 挨拶 → いちばん大事な目標 → 今日の一歩 → 積み上げた朝 → また始める → 希望の根拠 → 明日の私へ %>
 <% home = @home %>
 <div class="page">
   <%= render "shared/hero",
@@ -6,6 +6,9 @@
              lead: "#{home.clock_text}・#{current_user_name} さん" %>
 
   <main class="page-body max-w-md space-y-4">
+
+    <%# いちばん大事な目標（最優先に選んだもの。なければ達成予定日が近いもの）を、最初に見せる %>
+    <%= render "static_pages/top_vision", home: home %>
 
     <%# 今日の一歩（ヒーローカード） %>
     <section class="card rise overflow-hidden p-0 md:p-0">

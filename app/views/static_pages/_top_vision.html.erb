@@ -1,0 +1,29 @@
+<%# ホームの最初のカード: いちばん大事な目標。locals: home(HomePresenter)。主役のボタンは「今日の一歩」だけなので、ここはリンクにとどめる %>
+<% vision = home.top_vision %>
+<% if vision %>
+  <section id="top_vision" class="card card-amber rise space-y-2">
+    <p class="eyebrow"><%= vision.top_priority? ? "★ 最優先の目標" : "いちばん近い目標" %></p>
+    <h2 class="text-xl leading-relaxed font-bold text-ink [overflow-wrap:anywhere]"><%= vision.title %></h2>
+    <p class="line-clamp-2 text-sm leading-relaxed text-ink-body [overflow-wrap:anywhere]"><%= vision.content %></p>
+    <p class="text-sm text-ink-muted">
+      <% if (days = home.top_vision_days_left) %>
+        達成予定日 <%= vision.target_date.strftime("%Y年%-m月%-d日") %>（<%= days.zero? ? "今日" : "あと#{days}日" %>）
+      <% else %>
+        達成予定日 <%= vision.target_date.strftime("%Y年%-m月%-d日") %>
+      <% end %>
+    </p>
+    <p class="text-sm"><%= link_to "目標を見る・チェックする", visions_path, class: "topnav-link" %></p>
+  </section>
+<% elsif home.visions_any? %>
+  <section id="top_vision" class="card card-amber rise space-y-1">
+    <p class="eyebrow">目標</p>
+    <h2 class="text-lg leading-relaxed font-bold text-ink">すべての目標を達成しました。</h2>
+    <p class="text-sm"><%= link_to "次の目標を決める", new_vision_path, class: "topnav-link" %></p>
+  </section>
+<% else %>
+  <section id="top_vision" class="card card-amber rise space-y-1">
+    <p class="eyebrow">目標</p>
+    <p class="leading-relaxed text-ink-body">叶えたいことを、ひとつ決めてみませんか。</p>
+    <p class="text-sm"><%= link_to "目標を決める", new_vision_path, class: "topnav-link" %></p>
+  </section>
+<% end %>

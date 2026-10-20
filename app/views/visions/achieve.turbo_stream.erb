@@ -1,0 +1,3 @@
+<%# 達成のチェック: そのカードだけ差し替え（お祝いの動き付き）、達成数も更新する %>
+<%= turbo_stream.replace dom_id(@vision), partial: "visions/vision", locals: { vision: @vision, just_achieved: true } %>
+<%= turbo_stream.replace "visions_progress", partial: "visions/progress", locals: { user: current_user } %>

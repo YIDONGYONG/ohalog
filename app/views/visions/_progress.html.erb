@@ -1,0 +1,10 @@
+<%# 達成した目標の数（チェックのたびに Turbo Stream で更新する） %>
+<% total = user.visions.count %>
+<% done = user.visions.where.not(achieved_at: nil).count %>
+<p id="visions_progress" class="mb-4 text-sm text-ink-muted">
+  <% if total.zero? %>
+    最初のビジョンを決めましょう。
+  <% else %>
+    達成した目標 <b class="text-lg text-sage-deep"><%= done %></b> / <%= total %>
+  <% end %>
+</p>

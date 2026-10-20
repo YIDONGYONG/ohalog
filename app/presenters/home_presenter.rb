@@ -36,6 +36,19 @@ class HomePresenter
     end
   end
 
+  # ---- いちばん大事な目標（ホームの最初に出す） ----
+  # 最優先に選んだ目標、なければ達成予定日がいちばん近い未達成の目標
+  def top_vision = @top_vision ||= @user.visions.featured
+  def visions_any? = @user.visions.exists?
+
+  # 達成予定日までの日数（過ぎていたら nil。責めない表現にするため、過ぎた分は出さない）
+  def top_vision_days_left
+    return unless top_vision&.target_date
+
+    days = (top_vision.target_date - today).to_i
+    days if days >= 0
+  end
+
   # ---- 今日の一歩（ヒーロー） ----
   def routines = @routines ||= @user.routines.order(:category).to_a
   def started? = routines.any?

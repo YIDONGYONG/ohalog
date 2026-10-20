@@ -91,4 +91,52 @@ RSpec.describe "Visions", type: :request do
       expect(response.body).not_to match(/type="date"[^>]*min=/)
     end
   end
+
+  describe "achievement and priority" do
+    it "marks a vision as achieved with a Turbo Stream that celebrates it" do
+      patch achieve_vision_path(vision), as: :turbo_stream
+      expect(response).to have_http_status(:ok)
+      expect(vision.reload).to be_achieved
+      expect(response.body).to include("vision-done-fresh").and include("visions_progress")
+    end
+
+    it "falls back to a redirect without Turbo" do
+      patch achieve_vision_path(vision)
+      expect(response).to redirect_to(visions_path)
+    end
+
+    it "can undo an achievement" do
+      vision.achieve!
+      patch reopen_vision_path(vision), as: :turbo_stream
+      expect(vision.reload).not_to be_achieved
+      expect(response.body).not_to include("vision-done-fresh")
+    end
+
+    it "sets and clears the top priority" do
+      patch prioritize_vision_path(vision)
+      expect(vision.reload.top_priority).to be true
+      get visions_path
+      expect(response.body).to include("最優先")
+      patch prioritize_vision_path(vision)
+      expect(vision.reload.top_priority).to be false
+    end
+
+    it "cannot achieve or prioritize another user's vision" do
+      other = User.create!(email: "o2@example.com", password: "password1", first_name: "c", last_name: "d")
+      theirs = other.visions.create!(title: "Theirs", content: "p", target_date: 1.year.from_now.to_date)
+      patch achieve_vision_path(theirs)
+      expect(response).to have_http_status(:not_found)
+      patch prioritize_vision_path(theirs)
+      expect(response).to have_http_status(:not_found)
+      expect(theirs.reload).not_to be_achieved
+    end
+
+    it "shows the top priority vision first on the home page" do
+      other_vision = user.visions.create!(title: "Priority goal", content: "x", target_date: 2.years.from_now.to_date)
+      other_vision.toggle_top_priority!
+      get root_path
+      expect(response.body).to include("Priority goal")
+      expect(response.body.index("top_vision")).to be < response.body.index("はじめの一歩")
+    end
+  end
 end
