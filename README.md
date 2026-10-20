@@ -1,4 +1,4 @@
-# MiracleMorning
+# おはログ
 
 # 1. サービス概要
 

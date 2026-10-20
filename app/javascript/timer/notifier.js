@@ -12,7 +12,7 @@ export function ensurePermission() {
 export async function notifyFinished(state) {
   try {
     if (!("Notification" in window) || Notification.permission !== "granted") return
-    const title = "Morning Miracle"
+    const title = "おはログ"
     const options = {
       body: `${state.label || "タイマー"}、できました。おつかれさまでした。`,
       tag: "miracle-timer", icon: "/icon.png", data: { path: "/routines" }
