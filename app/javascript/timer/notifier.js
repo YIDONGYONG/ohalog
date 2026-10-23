@@ -15,7 +15,7 @@ export async function notifyFinished(state) {
     const title = "おはログ"
     const options = {
       body: `${state.label || "タイマー"}、できました。おつかれさまでした。`,
-      tag: "miracle-timer", icon: "/icon.png", data: { path: "/routines" }
+      tag: "ohalog-timer", icon: "/icon.png", data: { path: "/routines" }
     }
     // 登録済みの Service Worker があればそちらで通知する(スマホのブラウザはこちらが必要)。
     // ready は登録がないと永遠に終わらないので、getRegistration で「あるか」だけを確認する

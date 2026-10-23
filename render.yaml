@@ -2,7 +2,7 @@
 # 注意: 無料 Web は15分アクセスがないとスリープする
 services:
   - type: web
-    name: miracle-morning
+    name: ohalog
     runtime: ruby
     plan: free
     buildCommand: ./bin/render-build.sh

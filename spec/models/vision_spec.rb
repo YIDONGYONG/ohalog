@@ -125,6 +125,15 @@ RSpec.describe Vision, type: :model do
       expect(v.reload).not_to be_achieved
     end
 
+    it "can be achieved even if a legacy record has no target date" do
+      v = make("legacy", 5)
+      v.update_columns(target_date: nil)
+      v.achieve!
+      expect(v.reload).to be_achieved
+      v.reopen!
+      expect(v.reload).not_to be_achieved
+    end
+
     it "keeps only one top priority per user" do
       a = make("a", 5)
       b = make("b", 9)

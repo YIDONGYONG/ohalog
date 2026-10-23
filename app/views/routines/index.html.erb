@@ -15,7 +15,7 @@
       </div>
     <% end %>
 
-    <div class="card-grid">
+    <div class="card-grid !gap-2 md:!gap-3">
       <% @routines.each do |routine| %>
         <%= render "routines/routine", routine: routine, today_log: @today_logs[routine.category] %>
       <% end %>

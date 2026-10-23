@@ -23,12 +23,14 @@ class Vision < ApplicationRecord
 
   def achieved? = achieved_at.present?
 
+  # 達成・取り消し・最優先の切り替えは状態だけを変える操作。
+  # 予定日が空の過去データでも止まらないよう、入力項目のバリデーションは通さずに保存する
   def achieve!
-    update!(achieved_at: Time.current, top_priority: false)
+    update_status!(achieved_at: Time.current, top_priority: false)
   end
 
   def reopen!
-    update!(achieved_at: nil)
+    update_status!(achieved_at: nil)
   end
 
   # 最優先は1人につき1件だけ。すでに最優先なら外す
@@ -37,15 +39,19 @@ class Vision < ApplicationRecord
 
     transaction do
       if top_priority?
-        update!(top_priority: false)
+        update_status!(top_priority: false)
       else
         user.visions.where.not(id: id).update_all(top_priority: false)
-        update!(top_priority: true)
+        update_status!(top_priority: true)
       end
     end
   end
 
   private
+
+  def update_status!(attrs)
+    update_columns(attrs.merge(updated_at: Time.current))
+  end
 
   def unparsable_target_date?
     target_date.nil? && target_date_before_type_cast.present?

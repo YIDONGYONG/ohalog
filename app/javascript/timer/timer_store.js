@@ -7,10 +7,10 @@ import { notifyFinished } from "./notifier.js"
 const LAST_SEEN_WRITE_INTERVAL_MS = 5000
 const listeners = new Set()
 let channel = null
-try { if ("BroadcastChannel" in window) channel = new BroadcastChannel("miracle-timer") } catch (_error) { channel = null }
+try { if ("BroadcastChannel" in window) channel = new BroadcastChannel("ohalog-timer") } catch (_error) { channel = null }
 
 // ユーザーごとにキーを分ける(同じブラウザで別アカウントに替えても混ざらない)
-const storageKey = () => `miracle.timer.v1.${document.body?.dataset.userId || "anon"}`
+const storageKey = () => `ohalog.timer.v1.${document.body?.dataset.userId || "anon"}`
 
 function read({ settle = true } = {}) {
   try { return M.restore(localStorage.getItem(storageKey()), Date.now(), { settle }) } catch (_error) { return null }
