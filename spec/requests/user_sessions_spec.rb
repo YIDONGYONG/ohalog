@@ -10,6 +10,11 @@ RSpec.describe "UserSessions", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  it "resets the session on login (session fixation)" do
+    expect_any_instance_of(UserSessionsController).to receive(:reset_session).and_call_original
+    post login_path, params: { email: user.email, password: "password1" }
+  end
+
   it "rejects a wrong password" do
     post login_path, params: { email: user.email, password: "wrong-password" }
     expect(response).to have_http_status(:unprocessable_entity)

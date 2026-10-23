@@ -13,6 +13,11 @@ RSpec.describe "Users", type: :request do
     expect(response.body).to include("山田 太郎")
   end
 
+  it "resets the session on sign-up (session fixation)" do
+    expect_any_instance_of(UsersController).to receive(:reset_session).and_call_original
+    post users_path, params: valid_params
+  end
+
   it "shows readable Japanese errors for empty input (regression: Translation missing)" do
     expect { post users_path, params: { user: { email: "", password: "" } } }.not_to change(User, :count)
     expect(response).to have_http_status(:unprocessable_entity)

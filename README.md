@@ -1,5 +1,128 @@
 # おはログ
 
+[![CI](https://github.com/YIDONGYONG/ohalog/actions/workflows/ci.yml/badge.svg)](https://github.com/YIDONGYONG/ohalog/actions/workflows/ci.yml)
+
+**朝の習慣化に挫折した人へ。極小ルーティンを、自分のペースで積み重ねる「適応型」習慣化アプリ。**
+
+🔗 **デモ：** https://ohalog.onrender.com
+（無料プランのため、しばらくアクセスがないと初回の表示に30秒〜1分かかります。会員登録すればどなたでも試せます）
+
+---
+
+# 0. このリポジトリを初めて見る方へ（概要）
+
+## 何を作ったか
+運動・瞑想・読書・1日の計画の4つの朝ルーティンを、**8段階のレベル**で少しずつ育てていくアプリです。
+連続記録がリセットされる厳格なトラッカー（Streaks など）とは逆に、「休んでも減らない」「できなかった週は軽くする」ことを設計の中心にしています。
+
+## 主な機能（実装済み）
+| 画面 | できること |
+|---|---|
+| ホーム（今日） | 今日の一歩の提案、気分（軽め／普通／元気）に合わせた声かけ、これまでに迎えた朝の回数と2週間の庭、最優先の目標 |
+| ルーティン | 4つのカードごとに、リング型タイマー（一時停止・途中でやめても「できた分」を認める）／ワンタップ完了／「今日は休む」 |
+| 目標（ビジョン） | 長期ビジョンの登録・編集・削除、達成チェック（取り消し可）、最優先の目標の切り替え |
+| 週ごとの振り返り | 先週の結果に応じて、レベルアップのお知らせ・休み券での免除・「一段階軽くする」提案（本人が選ぶ） |
+| 認証 | 会員登録・ログイン・ログアウト（ログイン試行の回数制限つき） |
+
+## 設計上の判断（なぜそうしたか）
+- **連続記録（ストリーク）を採用しない。** 1日の失敗で積み上げが消える体験が、挫折の原因になると考えたため。表示するのは「迎えた朝の累計」だけ。
+- **レベルの判定は「先週」を週に1回だけ。** 接続したときに先週分を判定し、`weekly_reviews` に残します。`with_lock` とユーザー×週の一意制約で、同時アクセスでも二重に判定されません。1週間に動くのは最大1段階。
+- **下げるのは「提案」で、自動では下げない。** 休み券（月2枚）が尽きたときだけ、一段階軽くする提案を出し、本人が受け入れたときに反映します。
+- **データは必ず `current_user` 経由で取得。** 他人のIDを指定しても404になります（リクエストスペックで検証）。
+- **タイマーはブラウザ側（Stimulus + localStorage）で動かす。** 別タブや再読み込みでも続き、完了時はServer側に1回だけ記録します。計算ロジックは純粋関数にして、Node の組み込みテストで検証しています。
+- **言葉づかい。** エラーや失敗を責めない文面、赤色を避けた配色（デザインルールは [docs/UI_GUIDE.md](docs/UI_GUIDE.md)）。
+
+## 技術スタック
+| 区分 | 内容 |
+|---|---|
+| 言語・FW | Ruby 3.4 / Ruby on Rails 8.1（Hotwire: Turbo・Stimulus） |
+| UI | Tailwind CSS v4（デザイントークンを1ファイルに集約）、esbuild |
+| DB | PostgreSQL（本番は Neon、開発は Docker） |
+| テスト | RSpec（モデル・リクエスト・プレゼンター）、Node `node --test`（タイマー計算） |
+| 品質 | RuboCop、Brakeman、GitHub Actions（CI） |
+| 公開 | Render（Web Service）＋ Neon（PostgreSQL） |
+
+```mermaid
+flowchart LR
+  B[ブラウザ / PWA] -->|HTTPS| R[Render: Rails 8.1 + Puma]
+  R -->|SSL| N[(Neon: PostgreSQL)]
+```
+
+## テーブル構成（ER図）
+```mermaid
+erDiagram
+  users ||--o{ routines : has
+  users ||--o{ visions : has
+  users ||--o{ activity_logs : has
+  users ||--o{ weekly_reviews : has
+  routines ||--o{ routine_logs : has
+  users {
+    string email UK
+    string password_digest
+    int level
+    int rest_tickets
+    date rest_tickets_refilled_on
+  }
+  routines {
+    int category "運動・瞑想・読書・計画"
+    int current_level
+    date last_recorded_on
+  }
+  routine_logs {
+    date recorded_on
+    bool achieved
+    bool completed_fully
+  }
+  activity_logs {
+    string activity_key
+    int kind "timer/count/check"
+    int actual_seconds
+    datetime completed_at
+  }
+  visions {
+    string title
+    text content
+    date target_date
+    datetime achieved_at
+    bool top_priority
+  }
+  weekly_reviews {
+    date week_start
+    int clear_days
+    string outcome
+    int level_before
+    int level_after
+  }
+```
+
+## ローカルでの動かし方
+```bash
+docker compose up -d                          # web / PostgreSQL / Chrome を起動
+docker compose exec web bundle install
+docker compose exec web yarn install
+docker compose exec web bin/rails db:prepare
+docker compose exec web bin/dev               # Rails + Tailwind（http://localhost:3000）
+```
+
+## テストと品質チェック
+```bash
+docker compose exec web bundle exec rspec     # 134 examples
+docker compose exec web yarn test:js          # タイマー計算
+docker compose exec web bundle exec rubocop
+docker compose exec web bundle exec brakeman --no-pager
+```
+CI（GitHub Actions）では、Brakeman・RuboCop・RSpec を push / PR のたびに実行しています。
+
+## 既知の制限と今後の課題
+- 無料プランのため、アクセスがないとスリープし初回表示が遅い。
+- DB（Neon）が海外リージョンのため、1リクエストのクエリ待ちが長め。国内リージョンへの移行を検討中。
+- Web App Manifest が未整備（ホーム画面追加の体験は今後）。
+- 画面のE2Eテスト（ブラウザ操作）は未導入。
+
+---
+
+# ここから先は、企画・設計の記録です
+
 # 1. サービス概要
 
 ## どんなサービスか
@@ -9,7 +132,7 @@
 **対象：** 三日坊主を繰り返してしまう方へ。段階的なレベルアップで、無理なく習慣化できるアプリ。
 
 **解決策：**
-1. 3日連続で未達成の場合に自動で難易度を下げる「適応型セーフティネット」により、完璧主義による挫折とバーンアウトを防ぎます。
+1. 1週間まったくできなかったとき、月2枚の「休み券」で免除するか、一段階軽くする提案をする「適応型セーフティネット」により、完璧主義による挫折とバーンアウトを防ぎます。
 2. 厳格な統制ではなく「毎日の小さな成長」とスモールステップを重視し、自分のペースで持続可能な習慣を定着させます。
 
 # 2. このアイデアはどこから生まれたか
@@ -57,7 +180,7 @@
 
 ## 4-4. 導入・継続の流れ
 **導入：** 意志力の限界を感じ、「仕組み」による自己変革を求めて登録。
-**継続の仕組み：** 未達成が続いた場合は目標難易度を自動的に下げ、挫折とアプリからの離脱を防ぐ。
+**継続の仕組み：** 1週間まったくできなかった場合は、休み券で免除するか、目標を一段階軽くする提案をして、挫折とアプリからの離脱を防ぐ。
 
 # 5. 既存サービス・競合調査
 
@@ -97,9 +220,9 @@ Streaksはシンプルで多様な習慣を登録・達成できる優れたア�
 * **ユーザー認証・マイページ：** ユーザー登録、ログイン、人生の目標・ビジョン登録。
 * **マイクロルーティン登録：** 4つのコア・ルーティンの登録とスモールスタートの設定。
 * **8段階の目標ステップアップ機能：** ユーザーが最初から高すぎる目標を立てて挫折するのを防ぐため、極小レベルからスタートし、条件達成で自動昇格していく仕組み。
-* **動的目標調整システム：** 週3回の実行でクリアとし、3日連続未達成時にシステムが自動で目標値を下方修正して挫折を防止。
+* **週ごとの動的な目標調整：** 先週を振り返り、3日以上クリアでレベルアップへ前進、0日なら休み券で免除、休み券がなければ一段階軽くする提案（本人が受け入れたときだけ反映）。
 * **ワンタッチ完了チェック機能：** 直感的に素早く行えるルーティンの完了チェック。
-* **成長ダッシュボード：** ストリーク（連続達成日数）の可視化によるモチベーション維持。
+* **積み上げた朝の可視化：** 連続日数ではなく「これまでに迎えた朝の回数」と2週間の庭で表示。休んでも数字は減らない。
 
 ## 「極小ルーティン」の基準を具体化
 **朝の60分ルーティン：8段階の段階的目標上昇システム**
@@ -121,7 +244,8 @@ Streaksはシンプルで多様な習慣を登録・達成できる優れたア�
 # 8. このアプリの懸念点とその対策
 **懸念点：** 朝寝起きの状態では、習慣アプリを開くより、SNSや娯楽アプリを優先して開いてしまう可能性がある。
 **原因：** どれだけ優れた機能でも、起動されなければ意味がないため。
-**対策：** スマホの「ホーム画面へ自分の目標を追加（PWA）」機能とWebプッシュ通知を活用し、ネイティブアプリのように起床直後1タップでアクセスできる導線を設計する。
+**対策：** スマホの「ホーム画面に追加」とブラウザ通知を活用し、ネイティブアプリのように起床直後1タップでアクセスできる導線を設計する。
+**現状：** タイマー完了のブラウザ通知（Service Worker）までは実装済み。Web App Manifest の整備は今後の課題。
 
 # 9. 今後の展開・発展の方向性
 **機能追加：** 14日連続達成でルーティンの難易度を段階的に上げる機能。
@@ -130,8 +254,8 @@ Streaksはシンプルで多様な習慣を登録・達成できる優れたア�
 
 # 10. 技術スタック（手段としての技術）
 
-## 10-1. 使用予定の技術
-* **フレームワーク：** Ruby on Rails 7 (Hotwire: Turbo / Stimulus)
+## 10-1. 使用技術
+* **フレームワーク：** Ruby on Rails 8.1 (Hotwire: Turbo / Stimulus)
 * **データベース：** PostgreSQL
 * **開発環境：** Docker
 

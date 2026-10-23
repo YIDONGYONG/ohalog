@@ -14,6 +14,7 @@ class UserSessionsController < ApplicationController
     user = User.find_by(email: params[:email])
 
     if user&.authenticate(params[:password])
+      reset_session # ログイン前のセッションを引き継がない（セッション固定攻撃への対策）
       session[:user_id] = user.id
       redirect_to root_path, notice: t(".success")
     else
