@@ -106,8 +106,6 @@ CI（GitHub Actions）では、Brakeman・RuboCop・RSpec を push / PR のた�
 
 ## 既知の制限と今後の課題
 - DB（Neon）が海外リージョンのため、1リクエストのクエリ待ちが長め。国内リージョンへの移行を検討中。
-- Web App Manifest が未整備（ホーム画面追加の体験は今後）。
-- 画面のE2Eテスト（ブラウザ操作）は未導入。
 
 ---
 
